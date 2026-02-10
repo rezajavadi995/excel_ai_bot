@@ -6,7 +6,7 @@ REPO_URL="https://github.com/rezajavadi995/excel_ai_bot.git"
 PROJECT_DIR="excel_ai_bot"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🚀 Excel AI Bot | Universal Smart Installer (Final)"
+echo "🚀 Excel AI Bot | Universal Smart Installer (FINAL)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # =============================
@@ -15,18 +15,15 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 ENV_TYPE="linux"
 PYTHON_BIN="python3"
-PKG_INSTALL=""
 BIN_DIR="/usr/local/bin"
 
 if [ -d "/data/data/com.termux/files" ]; then
     ENV_TYPE="termux"
     PYTHON_BIN="python"
-    PKG_INSTALL="pkg install -y"
     BIN_DIR="$HOME/.local/bin"
     mkdir -p "$BIN_DIR"
     echo "📱 محیط Termux شناسایی شد"
 else
-    PKG_INSTALL="apt install -y"
     echo "🖥 محیط Linux شناسایی شد"
 fi
 
@@ -34,31 +31,46 @@ fi
 # نصب پیش‌نیازهای سیستمی
 # =============================
 
-echo "📦 بررسی و نصب پیش‌نیازهای سیستمی"
+echo "📦 نصب پیش‌نیازهای سیستمی (System Dependencies)"
 
 if [ "$ENV_TYPE" = "linux" ]; then
-    echo "🔧 نصب پکیج‌های ضروری Linux برای Python و باینری‌ها"
     sudo apt update
-    sudo apt install -y python3-dev python3-venv build-essential libffi-dev libssl-dev git python3 python3-pip
+    sudo apt install -y \
+        git \
+        python3 \
+        python3-venv \
+        python3-dev \
+        python3-pip \
+        build-essential \
+        libffi-dev \
+        libssl-dev \
+        rustc \
+        cargo
 fi
 
 if [ "$ENV_TYPE" = "termux" ]; then
-    echo "🔧 نصب پکیج‌های ضروری Termux"
-    $PKG_INSTALL git python clang make libffi openssl
+    pkg install -y \
+        git \
+        python \
+        clang \
+        make \
+        libffi \
+        openssl \
+        rust
 fi
 
 # =============================
-# دانلود یا بروزرسانی پروژه
+# دریافت یا بروزرسانی پروژه
 # =============================
 
 if [ -d "$PROJECT_DIR/.git" ]; then
-    echo "🔄 پروژه وجود دارد → بروزرسانی"
-    cd $PROJECT_DIR
+    echo "🔄 پروژه موجود است → بروزرسانی"
+    cd "$PROJECT_DIR"
     git pull
 else
-    echo "⬇️ دانلود پروژه از GitHub"
-    git clone $REPO_URL
-    cd $PROJECT_DIR
+    echo "⬇️ دریافت پروژه از GitHub"
+    git clone "$REPO_URL"
+    cd "$PROJECT_DIR"
 fi
 
 # =============================
@@ -71,29 +83,33 @@ if [ ! -d "venv" ]; then
 fi
 
 # =============================
-# فعال‌سازی virtualenv (در Installer)
+# فعال‌سازی virtualenv
 # =============================
 
 source venv/bin/activate
 
 # =============================
-# نصب پکیج‌های پایتون
+# نصب پکیج‌های پایتون (ترتیب حیاتی)
 # =============================
 
-echo "📦 نصب پیش‌نیازهای پایتونی"
-pip install --upgrade pip
-pip install wheel setuptools
+echo "📦 نصب وابستگی‌های پایتون"
+
+pip install --upgrade pip setuptools wheel
+
+# SOCKS فقط از PySocks (جلوگیری از build خراب)
 pip install PySocks
-pip install -r requirements.txt
+
+# نصب باقی پکیج‌ها بدون isolation
+pip install -r requirements.txt --no-build-isolation
 
 # =============================
-# اجرای تست‌های هسته
+# اجرای تست‌های پروژه
 # =============================
 
-echo "🧪 اجرای تست اولیه پروژه (test_project.py)"
+echo "🧪 اجرای تست هسته"
 python test_project.py
 
-echo "🧪 اجرای تست AI Command Mode (test_ai_command.py)"
+echo "🧪 اجرای تست AI Command"
 python test_ai_command.py
 
 # =============================
@@ -107,11 +123,11 @@ read -p "توکن ربات تلگرام (BotFather): " BOT_TOKEN
 read -p "ID عددی مدیر (Admin ID): " ADMIN_ID
 
 cat > config.py <<EOF
-BOT_TOKEN = "${BOT_TOKEN}"
-ADMIN_ID = ${ADMIN_ID}
+BOT_TOKEN="${BOT_TOKEN}"
+ADMIN_ID=${ADMIN_ID}
 EOF
 
-echo "✅ توکن و ادمین با موفقیت ثبت شدند"
+echo "✅ تنظیمات مدیر ذخیره شد"
 
 # =============================
 # ساخت دستور سراسری EXCEL
@@ -131,19 +147,19 @@ EOF
 
 chmod +x "$EXCEL_PATH"
 
-# اضافه کردن BIN_DIR به PATH اگر نبود
+# اضافه شدن PATH در صورت نیاز
 if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
     echo "export PATH=\$PATH:$BIN_DIR" >> ~/.bashrc
     export PATH="$PATH:$BIN_DIR"
 fi
 
-echo "✅ دستور EXCEL آماده شد"
+echo "✅ دستور EXCEL آماده استفاده است"
 
 # =============================
-# اجرای تست UI تلگرام
+# تست UI تلگرام
 # =============================
 
-echo "🧪 اجرای تست UI با دکمه‌های تلگرام"
+echo "🧪 اجرای تست UI تلگرام (دکمه‌ها)"
 python bot/test_ui_bot.py
 
 # =============================
@@ -152,67 +168,6 @@ python bot/test_ui_bot.py
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🎯 نصب کامل و موفق"
-echo "📌 اجرای ربات:"
-echo "    EXCEL"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"echo "🧪 اجرای تست AI Command Mode (test_ai_command.py)"
-python test_ai_command.py
-
-# =============================
-# تنظیمات مدیر ربات
-# =============================
-
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🛠 تنظیمات مدیر ربات"
-
-read -p "توکن ربات تلگرام (BotFather): " BOT_TOKEN
-read -p "ID عددی مدیر (Admin ID): " ADMIN_ID
-
-cat > config.py <<EOF
-BOT_TOKEN = "${BOT_TOKEN}"
-ADMIN_ID = ${ADMIN_ID}
-EOF
-
-echo "✅ توکن و ادمین با موفقیت ثبت شدند"
-
-# =============================
-# ساخت دستور سراسری EXCEL
-# =============================
-
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🔗 ساخت دستور سراسری EXCEL"
-
-EXCEL_PATH="$BIN_DIR/EXCEL"
-
-cat > "$EXCEL_PATH" <<EOF
-#!/usr/bin/env bash
-cd "$(pwd)"
-source venv/bin/activate
-python bot/main_bot.py
-EOF
-
-chmod +x "$EXCEL_PATH"
-
-# اضافه کردن BIN_DIR به PATH اگر نبود
-if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
-    echo "export PATH=\$PATH:$BIN_DIR" >> ~/.bashrc
-    export PATH="$PATH:$BIN_DIR"
-fi
-
-echo "✅ دستور EXCEL آماده شد"
-
-# =============================
-# اجرای تست UI تلگرام
-# =============================
-
-echo "🧪 اجرای تست UI با دکمه‌های تلگرام"
-python bot/test_ui_bot.py
-
-# =============================
-# پایان
-# =============================
-
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🎯 نصب کامل و موفق"
-echo "📌 اجرای ربات:"
+echo "▶ اجرای ربات:"
 echo "    EXCEL"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
