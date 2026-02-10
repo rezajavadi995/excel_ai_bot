@@ -14,3 +14,9 @@ storage/versions/*
 
 # system
 .DS_Store
+
+
+#
+config.py
+.env
+*.secret
