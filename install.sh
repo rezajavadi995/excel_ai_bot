@@ -110,12 +110,18 @@ EOF
 }
 
 if [ -f "$CONFIG_FILE" ]; then
+if [ -f "$CONFIG_FILE" ]; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "⚙️ تنظیمات فعلی یافت شد:"
-    source "$CONFIG_FILE"
-    echo "BOT_TOKEN = ${BOT_TOKEN:0:6}******"
-    echo "ADMIN_ID  = $ADMIN_ID"
+
+    # از پایتون برای خواندن مقادیر امن استفاده می‌کنیم
+    BOT_TOKEN_SAFE=$(python3 -c "from config import BOT_TOKEN; print(BOT_TOKEN[:6] + '******')")
+    ADMIN_ID_VAL=$(python3 -c "from config import ADMIN_ID; print(ADMIN_ID)")
+
+    echo "BOT_TOKEN = $BOT_TOKEN_SAFE"
+    echo "ADMIN_ID  = $ADMIN_ID_VAL"
     echo
+
     read -p "آیا این تنظیمات صحیح هستند؟ (y/n): " CONFIRM
     if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
         echo "🔁 دریافت مجدد تنظیمات"
