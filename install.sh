@@ -21,6 +21,19 @@ fi
 
 echo "🚀 Excel AI Bot Installer"
 
+prompt_input() {
+  local var_name="$1"
+  local label="$2"
+
+  # when installer is executed by curl|bash, stdin is a pipe.
+  # read from /dev/tty to always get real user input.
+  if [ -r /dev/tty ]; then
+    read -r -p "$label" "$var_name" < /dev/tty
+  else
+    read -r -p "$label" "$var_name"
+  fi
+}
+
 install_deps() {
   if [ "$ENV_TYPE" = "linux" ]; then
     sudo apt update
@@ -63,13 +76,21 @@ write_secrets() {
   mkdir -p "$APP_CONFIG_DIR"
   chmod 700 "$APP_CONFIG_DIR"
 
-  read -r -p "🔑 توکن ربات تلگرام: " BOT_TOKEN
-  read -r -p "👤 Admin ID عددی: " ADMIN_ID
+  while true; do
+    prompt_input BOT_TOKEN "🔑 توکن ربات تلگرام: "
+    if [ -n "${BOT_TOKEN:-}" ]; then
+      break
+    fi
+    echo "❌ توکن نباید خالی باشد"
+  done
 
-  if ! [[ "$ADMIN_ID" =~ ^[0-9]+$ ]]; then
+  while true; do
+    prompt_input ADMIN_ID "👤 Admin ID عددی: "
+    if [[ "${ADMIN_ID:-}" =~ ^[0-9]+$ ]]; then
+      break
+    fi
     echo "❌ ADMIN_ID باید عدد باشد"
-    return 1
-  fi
+  done
 
   cat > "$SECRETS_FILE" <<EOF
 {
@@ -83,7 +104,7 @@ EOF
 setup_secrets() {
   if [ -f "$SECRETS_FILE" ]; then
     local token admin
-    token=$(python3 - <<PY
+    token=$($PYTHON_BIN - <<PY
 import json
 from pathlib import Path
 p = Path("$SECRETS_FILE")
@@ -91,7 +112,7 @@ data = json.loads(p.read_text())
 print(data.get("BOT_TOKEN", ""))
 PY
 )
-    admin=$(python3 - <<PY
+    admin=$($PYTHON_BIN - <<PY
 import json
 from pathlib import Path
 p = Path("$SECRETS_FILE")
@@ -103,7 +124,7 @@ PY
     echo "تنظیمات فعلی یافت شد:"
     echo "BOT_TOKEN=$(mask_token "$token")"
     echo "ADMIN_ID=$admin"
-    read -r -p "آیا تایید می‌کنید؟ (y/n): " CONFIRM
+    prompt_input CONFIRM "آیا تایید می‌کنید؟ (y/n): "
     if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
       write_secrets
     fi

@@ -42,3 +42,28 @@ def test_ai_command_flow(tmp_path):
     wb2 = ExcelReader(str(test_file)).load()
     ws2 = wb2["Sheet"]
     assert ws2.cell(row=2, column=2).value == 110
+
+
+def test_ai_command_with_persian_digits_and_decrease(tmp_path):
+    test_file = tmp_path / "test2.xlsx"
+    _build_test_file(test_file)
+
+    reader = ExcelReader(str(test_file))
+    wb = reader.load()
+    sheet = reader.get_sheet("Sheet")
+
+    analysis = ExcelAnalyzer(sheet).analyze_columns()
+    parser = IntentParser(FakeAI())
+
+    blueprint = parser.parse(
+        "ستون price رو ۵ درصد کاهش بده",
+        {"sheets": ["Sheet"], "columns": analysis},
+    )
+
+    BlueprintValidator(analysis).validate(blueprint)
+    ExcelEditor(sheet).execute_blueprint(blueprint, analysis)
+    reader.save()
+
+    wb2 = ExcelReader(str(test_file)).load()
+    ws2 = wb2["Sheet"]
+    assert ws2.cell(row=2, column=2).value == 95

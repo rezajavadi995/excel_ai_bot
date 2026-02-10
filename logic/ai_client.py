@@ -50,17 +50,33 @@ class RuleBasedAIClient(AIClient):
 
     @staticmethod
     def _extract_columns(prompt: str) -> list[str]:
-        # fallback ساده: نام ستون‌های انگلیسی را از متن می‌گیرد
+        context_match = re.search(r"اطلاعات فایل اکسل:\s*(\{.*\})\s*دستور کاربر:", prompt, re.DOTALL)
+        if context_match:
+            try:
+                context = json.loads(context_match.group(1))
+                columns = context.get("columns", {})
+                if isinstance(columns, dict):
+                    return list(columns.keys())
+            except json.JSONDecodeError:
+                pass
+
+        # fallback ساده: نام کلیدهای انگلیسی را از متن می‌گیرد
         return re.findall(r'"([A-Za-z_][A-Za-z0-9_]*)"\s*:', prompt)
 
     @staticmethod
     def _detect_percent(text: str) -> float | None:
-        match = re.search(r"(-?\d+(?:\.\d+)?)\s*درصد", text)
+        normalized = RuleBasedAIClient._normalize_number_chars(text)
+        match = re.search(r"(-?\d+(?:\.\d+)?)\s*درصد", normalized)
         if match:
             return float(match.group(1))
         if any(token in text for token in ["افزایش", "زیاد"]):
             return 10.0
         return None
+
+    @staticmethod
+    def _normalize_number_chars(text: str) -> str:
+        translation = str.maketrans("۰۱۲۳۴۵۶۷۸۹٫", "0123456789.")
+        return text.translate(translation)
 
     @staticmethod
     def _detect_column(text: str, columns: list[str]) -> str | None:
