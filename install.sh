@@ -11,7 +11,6 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 # =============================
 # تشخیص محیط
 # =============================
-
 ENV_TYPE="linux"
 PYTHON_BIN="python3"
 BIN_DIR="/usr/local/bin"
@@ -31,7 +30,6 @@ fi
 # =============================
 # نصب پیش‌نیازهای سیستمی (فقط بار اول)
 # =============================
-
 if [ ! -f "$PROJECT_DIR/.system_ready" ]; then
     echo "📦 نصب پیش‌نیازهای سیستمی (یک‌بار)"
 
@@ -54,7 +52,6 @@ fi
 # =============================
 # دریافت یا بروزرسانی پروژه
 # =============================
-
 if [ -d "$PROJECT_DIR/.git" ]; then
     echo "🔄 پروژه موجود است → بروزرسانی کد"
     cd "$PROJECT_DIR"
@@ -68,7 +65,6 @@ fi
 # =============================
 # ساخت virtualenv
 # =============================
-
 if [ ! -d "venv" ]; then
     echo "🐍 ساخت virtualenv"
     $PYTHON_BIN -m venv venv
@@ -79,7 +75,6 @@ source venv/bin/activate
 # =============================
 # نصب پکیج‌های پایتون (فقط اگر لازم)
 # =============================
-
 if [ ! -f ".pip_ready" ]; then
     echo "📦 نصب وابستگی‌های پایتون"
 
@@ -95,7 +90,6 @@ fi
 # =============================
 # اجرای تست‌های هسته
 # =============================
-
 echo "🧪 اجرای تست هسته"
 python test_project.py
 
@@ -105,7 +99,6 @@ python test_ai_command.py
 # =============================
 # تنظیمات مدیر (فقط بار اول)
 # =============================
-
 if [ ! -f "config.py" ]; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "🛠 تنظیمات مدیر ربات"
@@ -124,35 +117,68 @@ else
 fi
 
 # =============================
-# ساخت لانچر هوشمند EXCEL
+# اطمینان از دسترسی به config برای همه فایل‌ها
 # =============================
+export PYTHONPATH="$PROJECT_DIR:\$PYTHONPATH"
 
+# =============================
+# ساخت لانچر هوشمند EXCEL (نسخه نهایی)
+# =============================
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔗 ساخت لانچر EXCEL"
 
 EXCEL_PATH="$BIN_DIR/EXCEL"
 
 LAUNCHER_CONTENT='#!/usr/bin/env bash
-cd "$HOME/excel_ai_bot"
+cd "$HOME/excel_ai_bot" || exit 1
 source venv/bin/activate
+export PYTHONPATH="$(pwd):$PYTHONPATH"
 
-echo "━━━━━━━━━━━━━━━━━━━━━━"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "📊 Excel AI Bot Launcher"
-echo "━━━━━━━━━━━━━━━━━━━━━━"
-echo "1) اجرای ربات تلگرام (Production)"
-echo "2) تست رابط کاربری ربات (Keyboard / UI)"
-echo "3) تست هسته پردازش اکسل"
-echo "4) تست فرمان هوشمند AI"
-echo "5) خروج"
-read -p "انتخاب: " CHOICE
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-case "$CHOICE" in
-  1) python bot/main_bot.py ;;
-  2) python bot/test_ui_bot.py ;;
-  3) python test_project.py ;;
-  4) python test_ai_command.py ;;
-  *) exit 0 ;;
-esac
+while true; do
+    echo ""
+    echo "۱) اجرای ربات تلگرام (Production)"
+    echo "۲) تست رابط کاربری ربات (Keyboard / UI)"
+    echo "۳) تست هسته پردازش اکسل"
+    echo "۴) تست فرمان هوشمند AI"
+    echo "۵) خروج"
+    echo ""
+    read -p "انتخاب خود را وارد کنید (1-5): " CHOICE
+    echo ""
+
+    case "$CHOICE" in
+        1)
+            echo "🚀 در حال اجرای ربات تلگرام (Production)..."
+            python bot/main_bot.py
+            ;;
+        2)
+            echo "🧪 در حال اجرای تست رابط کاربری ربات (Keyboard / UI)..."
+            python bot/test_ui_bot.py
+            ;;
+        3)
+            echo "📊 در حال اجرای تست هسته پردازش اکسل..."
+            python test_project.py
+            ;;
+        4)
+            echo "🤖 در حال اجرای تست فرمان هوشمند AI..."
+            python test_ai_command.py
+            ;;
+        5)
+            echo "🔹 خروج از لانچر..."
+            break
+            ;;
+        *)
+            echo "⚠️ گزینه نامعتبر! لطفا عددی بین 1 تا 5 وارد کنید."
+            ;;
+    esac
+done
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🎯 ممنون از استفاده شما از Excel AI Bot"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 '
 
 if [ "$NEED_SUDO" -eq 1 ]; then
@@ -166,7 +192,6 @@ fi
 # =============================
 # PATH
 # =============================
-
 if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
     echo "export PATH=\$PATH:$BIN_DIR" >> ~/.bashrc
     export PATH="$PATH:$BIN_DIR"
@@ -175,7 +200,6 @@ fi
 # =============================
 # پایان
 # =============================
-
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🎯 نصب کامل و پایدار انجام شد"
 echo "▶ برای اجرا:"
