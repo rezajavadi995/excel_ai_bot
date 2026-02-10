@@ -14,19 +14,15 @@ from telegram.ext import (
 
 from config import BOT_TOKEN, ADMIN_ID
 
-
 # =============================
 # ابزار کمکی
 # =============================
-
 def is_admin(user_id: int) -> bool:
     return user_id == ADMIN_ID
-
 
 # =============================
 # START
 # =============================
-
 def start(update: Update, context: CallbackContext):
     user = update.effective_user
 
@@ -49,11 +45,9 @@ def start(update: Update, context: CallbackContext):
         reply_markup=reply_markup
     )
 
-
 # =============================
 # CALLBACK HANDLER
 # =============================
-
 def handle_callback(update: Update, context: CallbackContext):
     query = update.callback_query
     user_id = query.from_user.id
@@ -122,11 +116,9 @@ def handle_callback(update: Update, context: CallbackContext):
     elif data == "back_home":
         start(update, context)
 
-
 # =============================
 # MESSAGE HANDLER (AI TEXT)
 # =============================
-
 def handle_text(update: Update, context: CallbackContext):
     text = update.message.text
 
@@ -137,23 +129,20 @@ def handle_text(update: Update, context: CallbackContext):
         parse_mode="Markdown"
     )
 
-
 # =============================
 # MAIN
 # =============================
-
 def main():
     updater = Updater(BOT_TOKEN, use_context=True)
 
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CallbackQueryHandler(handle_callback))
-    dp.add_handler(MessageHandler(filters.text & ~filters.command, handle_text))
+    dp.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
     print("✅ Test UI Bot is running...")
     updater.start_polling()
     updater.idle()
-
 
 if __name__ == "__main__":
     main()
