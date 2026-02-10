@@ -4,35 +4,57 @@ set -e
 
 REPO_URL="https://github.com/rezajavadi995/excel_ai_bot.git"
 PROJECT_DIR="excel_ai_bot"
-PYTHON_BIN="python3"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🚀 Excel AI Bot | Smart Installer (Final)"
+echo "🚀 Excel AI Bot | Universal Smart Installer"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+# =============================
 # تشخیص محیط
+# =============================
+
+ENV_TYPE="linux"
+PYTHON_BIN="python3"
+PKG_INSTALL=""
+BIN_DIR="/usr/local/bin"
+
 if [ -d "/data/data/com.termux/files" ]; then
-    echo "📱 محیط Termux شناسایی شد"
+    ENV_TYPE="termux"
     PYTHON_BIN="python"
+    PKG_INSTALL="pkg install -y"
+    BIN_DIR="$HOME/.local/bin"
+    mkdir -p "$BIN_DIR"
+    echo "📱 محیط Termux شناسایی شد"
+else
+    PKG_INSTALL="apt install -y"
+    echo "🖥 محیط Linux شناسایی شد"
 fi
 
-# بررسی git
+# =============================
+# نصب پیش‌نیازهای سیستمی
+# =============================
+
+echo "📦 بررسی و نصب پیش‌نیازهای سیستمی"
+
 if ! command -v git >/dev/null 2>&1; then
-    echo "❌ git نصب نیست"
-    echo "👉 نصب کن:"
-    echo "   apt install git"
-    exit 1
+    echo "🔧 نصب git"
+    $PKG_INSTALL git
 fi
 
-# بررسی پایتون
 if ! command -v $PYTHON_BIN >/dev/null 2>&1; then
-    echo "❌ Python نصب نیست"
-    echo "👉 نصب کن:"
-    echo "   apt install python"
-    exit 1
+    echo "🔧 نصب python"
+    $PKG_INSTALL python python3 python3-venv
 fi
 
-# دانلود یا آپدیت پروژه
+# مخصوص Termux برای پکیج‌های باینری
+if [ "$ENV_TYPE" = "termux" ]; then
+    $PKG_INSTALL clang make libffi openssl
+fi
+
+# =============================
+# دانلود یا بروزرسانی پروژه
+# =============================
+
 if [ -d "$PROJECT_DIR/.git" ]; then
     echo "🔄 پروژه وجود دارد → بروزرسانی"
     cd $PROJECT_DIR
@@ -43,83 +65,95 @@ else
     cd $PROJECT_DIR
 fi
 
+# =============================
 # ساخت virtualenv
+# =============================
+
 if [ ! -d "venv" ]; then
     echo "🐍 ساخت virtualenv"
     $PYTHON_BIN -m venv venv
 fi
 
-# فعال‌سازی برای Installer
+# =============================
+# فعال‌سازی virtualenv (در Installer)
+# =============================
+
 source venv/bin/activate
 
-# نصب پیش‌نیازها
-echo "📦 نصب پیش‌نیازها"
+# =============================
+# نصب پکیج‌های پایتون
+# =============================
+
+echo "📦 نصب پیش‌نیازهای پایتونی"
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# اجرای تست‌ها
+# =============================
+# اجرای تست‌های هسته
+# =============================
+
 echo "🧪 اجرای تست اولیه پروژه (test_project.py)"
-if python test_project.py; then
-    echo "✅ test_project.py با موفقیت اجرا شد"
-else
-    echo "❌ خطا در اجرای test_project.py"
-    exit 1
-fi
+python test_project.py
 
 echo "🧪 اجرای تست AI Command Mode (test_ai_command.py)"
-if python test_ai_command.py; then
-    echo "✅ test_ai_command.py با موفقیت اجرا شد"
-else
-    echo "❌ خطا در اجرای test_ai_command.py"
-    exit 1
-fi
+python test_ai_command.py
 
-# ست کردن توکن و Admin ID
+# =============================
+# تنظیمات مدیر ربات
+# =============================
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🛠 تنظیمات مدیر ربات"
-read -p "توکن ربات تلگرام (از BotFather): " BOT_TOKEN
-read -p "ID عددی مدیر: " ADMIN_ID
 
-cat > config.py <<EOL
+read -p "توکن ربات تلگرام (BotFather): " BOT_TOKEN
+read -p "ID عددی مدیر (Admin ID): " ADMIN_ID
+
+cat > config.py <<EOF
 BOT_TOKEN = "${BOT_TOKEN}"
 ADMIN_ID = ${ADMIN_ID}
-EOL
+EOF
 
-echo "✅ توکن و ادمین ست شد"
+echo "✅ توکن و ادمین با موفقیت ثبت شدند"
 
 # =============================
-# ساخت شورتکات EXCEL
+# ساخت دستور سراسری EXCEL
 # =============================
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🔗 ساخت شورتکات 'EXCEL' برای اجرای ربات"
-BIN_PATH="/usr/local/bin/EXCEL"
+echo "🔗 ساخت دستور سراسری EXCEL"
 
-if [ ! -w "/usr/local/bin" ]; then
-    # اگر دسترسی root نداریم، می‌توانیم در ~/.local/bin ایجاد کنیم
-    mkdir -p "$HOME/.local/bin"
-    BIN_PATH="$HOME/.local/bin/EXCEL"
-    echo "📌 شورتکات در $BIN_PATH ایجاد شد (برای Termux یا کاربر معمولی)"
+EXCEL_PATH="$BIN_DIR/EXCEL"
+
+cat > "$EXCEL_PATH" <<EOF
+#!/usr/bin/env bash
+cd "$(pwd)"
+source venv/bin/activate
+python bot/main_bot.py
+EOF
+
+chmod +x "$EXCEL_PATH"
+
+# اضافه کردن BIN_DIR به PATH اگر نبود
+if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+    echo "export PATH=\$PATH:$BIN_DIR" >> ~/.bashrc
+    export PATH="$PATH:$BIN_DIR"
 fi
 
-cat > "$BIN_PATH" <<EOL
-#!/usr/bin/env bash
-cd "$(dirname "$0")"
-source "$(pwd)/venv/bin/activate"
-python bot/main_bot.py
-EOL
-
-chmod +x "$BIN_PATH"
-echo "✅ شورتکات EXCEL ایجاد شد!"
-echo "برای اجرای ربات فقط تایپ کن:"
-echo "   EXCEL"
+echo "✅ دستور EXCEL آماده شد"
 
 # =============================
-# اجرای تست UI Bot
+# اجرای تست UI تلگرام
 # =============================
-echo "🧪 اجرای تست UI با دکمه‌ها"
+
+echo "🧪 اجرای تست UI با دکمه‌های تلگرام"
 python bot/test_ui_bot.py
 
+# =============================
+# پایان
+# =============================
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🎯 نصب و تست کامل پروژه با موفقیت انجام شد"
-echo "🎉 اکنون می‌توانید ربات را با دستور 'EXCEL' اجرا کنید"
+echo "🎯 نصب کامل و موفق"
+echo "📌 اجرای ربات:"
+echo "    EXCEL"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
