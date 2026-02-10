@@ -11,3 +11,22 @@ class ExcelEditor:
             cell = row[0]
             if isinstance(cell.value, (int, float)):
                 cell.value = cell.value * factor
+
+
+
+
+
+
+####
+
+    def execute_blueprint(self, blueprint, column_map):
+        action = blueprint["action"]
+        op = blueprint["operation"]
+
+        col_name = blueprint["target"]["column"]
+        col_index = column_map[col_name]["index"]
+
+        if action == "update":
+            if op["type"] == "percentage_increase":
+                self.increase_percentage(col_index, op["value"])
+
