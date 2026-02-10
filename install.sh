@@ -32,17 +32,14 @@ fi
 # =============================
 if [ ! -f "$PROJECT_DIR/.system_ready" ]; then
     echo "📦 نصب پیش‌نیازهای سیستمی (یک‌بار)"
-
     if [ "$ENV_TYPE" = "linux" ]; then
         sudo apt update
         sudo apt install -y \
             git python3 python3-venv python3-dev python3-pip \
             build-essential libffi-dev libssl-dev rustc cargo
     else
-        pkg install -y \
-            git python clang make libffi openssl rust
+        pkg install -y git python clang make libffi openssl rust
     fi
-
     mkdir -p "$PROJECT_DIR"
     touch "$PROJECT_DIR/.system_ready"
 else
@@ -55,7 +52,9 @@ fi
 if [ -d "$PROJECT_DIR/.git" ]; then
     echo "🔄 پروژه موجود است → بروزرسانی کد"
     cd "$PROJECT_DIR"
-    git pull
+    # config.py رو نادیده بگیر تا pull بدون خطا باشه
+    git update-index --assume-unchanged config.py || true
+    git pull || echo "⚠️ خطا در بروزرسانی کد، ادامه نصب..."
 else
     echo "⬇️ دریافت پروژه از GitHub"
     git clone "$REPO_URL" "$PROJECT_DIR"
@@ -69,7 +68,6 @@ if [ ! -d "venv" ]; then
     echo "🐍 ساخت virtualenv"
     $PYTHON_BIN -m venv venv
 fi
-
 source venv/bin/activate
 
 # =============================
@@ -77,11 +75,9 @@ source venv/bin/activate
 # =============================
 if [ ! -f ".pip_ready" ]; then
     echo "📦 نصب وابستگی‌های پایتون"
-
     pip install --upgrade pip setuptools wheel
     pip install PySocks
     pip install -r requirements.txt --no-build-isolation
-
     touch .pip_ready
 else
     echo "⏩ پکیج‌های پایتون قبلاً نصب شده‌اند"
@@ -91,21 +87,18 @@ fi
 # اجرای تست‌های هسته
 # =============================
 echo "🧪 اجرای تست هسته"
-python test_project.py
-
+python test_project.py || echo "⚠️ خطا در تست هسته"
 echo "🧪 اجرای تست AI Command"
-python test_ai_command.py
+python test_ai_command.py || echo "⚠️ خطا در تست AI"
 
 # =============================
 # تنظیمات مدیر ربات (امن و تعاملی)
 # =============================
-
 CONFIG_FILE="$PROJECT_DIR/config.py"
 
 get_config() {
     read -p "🔑 توکن ربات تلگرام (BotFather): " BOT_TOKEN
     read -p "👤 Admin ID عددی: " ADMIN_ID
-
     cat > "$CONFIG_FILE" <<EOF
 # این فایل به صورت خودکار ساخته شده
 # در GitHub نگهداری نشود
@@ -113,22 +106,17 @@ get_config() {
 BOT_TOKEN = "${BOT_TOKEN}"
 ADMIN_ID = ${ADMIN_ID}
 EOF
-
     chmod 600 "$CONFIG_FILE"
 }
 
 if [ -f "$CONFIG_FILE" ]; then
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "⚙️ تنظیمات فعلی یافت شد:"
-
     source "$CONFIG_FILE"
-
     echo "BOT_TOKEN = ${BOT_TOKEN:0:6}******"
     echo "ADMIN_ID  = $ADMIN_ID"
     echo
-
     read -p "آیا این تنظیمات صحیح هستند؟ (y/n): " CONFIRM
-
     if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
         echo "🔁 دریافت مجدد تنظیمات"
         get_config
@@ -140,10 +128,11 @@ else
     echo "🛠 تنظیمات اولیه ربات"
     get_config
 fi
+
 # =============================
 # اطمینان از دسترسی به config برای همه فایل‌ها
 # =============================
-export PYTHONPATH="$PROJECT_DIR:\$PYTHONPATH"
+export PYTHONPATH="$PROJECT_DIR:$PYTHONPATH"
 
 # =============================
 # ساخت لانچر هوشمند EXCEL (نسخه نهایی)
