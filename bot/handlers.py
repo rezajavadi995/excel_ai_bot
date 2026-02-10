@@ -78,6 +78,7 @@ async def _analyze_excel(chat_id: int) -> dict:
     return state
 
 
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     text = (update.message.text or "").strip()
