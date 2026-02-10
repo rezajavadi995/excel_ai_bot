@@ -86,6 +86,7 @@ source venv/bin/activate
 
 echo "📦 نصب پیش‌نیازهای پایتونی"
 pip install --upgrade pip
+pip install PySocks
 pip install -r requirements.txt
 
 # =============================
