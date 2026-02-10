@@ -1,38 +1,55 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
 REPO_URL="https://github.com/rezajavadi995/excel_ai_bot.git"
 PROJECT_DIR="excel_ai_bot"
+PYTHON_BIN="python3"
 
-echo "🚀 شروع نصب پروژه Excel AI Bot"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🚀 Excel AI Bot | Smart Installer"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# تشخیص محیط
+if [ -d "/data/data/com.termux/files" ]; then
+    echo "📱 محیط Termux شناسایی شد"
+    PYTHON_BIN="python"
+fi
 
 # بررسی git
-if ! command -v git &> /dev/null; then
+if ! command -v git >/dev/null 2>&1; then
     echo "❌ git نصب نیست"
+    echo "👉 نصب کن:"
+    echo "   apt install git"
     exit 1
 fi
 
-# بررسی python
-if ! command -v python3 &> /dev/null; then
-    echo "❌ python3 نصب نیست"
+# بررسی پایتون
+if ! command -v $PYTHON_BIN >/dev/null 2>&1; then
+    echo "❌ Python نصب نیست"
+    echo "👉 نصب کن:"
+    echo "   apt install python"
     exit 1
 fi
 
-# کلون پروژه
-if [ -d "$PROJECT_DIR" ]; then
-    echo "📁 پوشه پروژه وجود دارد، pull انجام می‌شود"
+# دانلود یا آپدیت پروژه
+if [ -d "$PROJECT_DIR/.git" ]; then
+    echo "🔄 پروژه وجود دارد → بروزرسانی"
     cd $PROJECT_DIR
     git pull
 else
-    echo "⬇️ در حال دانلود پروژه از GitHub"
+    echo "⬇️ دانلود پروژه از GitHub"
     git clone $REPO_URL
     cd $PROJECT_DIR
 fi
 
 # ساخت virtualenv
-echo "🐍 ساخت محیط مجازی"
-python3 -m venv venv
+if [ ! -d "venv" ]; then
+    echo "🐍 ساخت virtualenv"
+    $PYTHON_BIN -m venv venv
+fi
+
+# فعال‌سازی
 source venv/bin/activate
 
 # نصب پیش‌نیازها
@@ -40,10 +57,11 @@ echo "📦 نصب پیش‌نیازها"
 pip install --upgrade pip
 pip install -r requirements.txt
 
-echo "✅ نصب کامل شد"
-
 # اجرای تست
-echo "🧪 اجرای تست اولیه پروژه"
+echo "🧪 اجرای تست کل پروژه"
 python test_project.py
 
-echo "🎉 همه چیز با موفقیت انجام شد"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "✅ نصب و تست با موفقیت انجام شد"
+echo "🎉 پروژه آماده استفاده است"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
