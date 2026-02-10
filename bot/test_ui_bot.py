@@ -8,7 +8,7 @@ from telegram.ext import (
     CommandHandler,
     CallbackQueryHandler,
     MessageHandler,
-    Filters,
+    filters,
     CallbackContext
 )
 
@@ -148,7 +148,7 @@ def main():
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CallbackQueryHandler(handle_callback))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_text))
+    dp.add_handler(MessageHandler(filters.text & ~filters.command, handle_text))
 
     print("✅ Test UI Bot is running...")
     updater.start_polling()
