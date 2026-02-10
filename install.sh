@@ -139,6 +139,7 @@ create_launcher() {
 set -e
 cd "$HOME/excel_ai_bot"
 source venv/bin/activate
+export PYTHONPATH="$(pwd):$PYTHONPATH"
 
 while true; do
   echo "1) اجرای ربات"
@@ -146,7 +147,7 @@ while true; do
   echo "3) خروج"
   read -r -p "انتخاب: " choice
   case "$choice" in
-    1) python bot/main_bot.py ;;
+    1) python -m bot.main_bot ;;
     2) pytest -q ;;
     3) exit 0 ;;
     *) echo "گزینه نامعتبر" ;;
