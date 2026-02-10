@@ -4,3 +4,5 @@ python-telegram-bot>=20.7
 rich>=13.6.0
 requests>=2.31.0
 PySocks
+
+pytest>=8.0.0

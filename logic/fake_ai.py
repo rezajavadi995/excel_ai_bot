@@ -1,17 +1,5 @@
-class FakeAI:
-    def complete(self, prompt: str) -> str:
-        # فقط برای تست فاز ۲
-        return """
-{
-  "sheet": "Sheet",
-  "action": "update",
-  "target": {
-    "column": "price"
-  },
-  "condition": null,
-  "operation": {
-    "type": "percentage_increase",
-    "value": 10
-  }
-}
-"""
+from logic.ai_client import RuleBasedAIClient
+
+
+class FakeAI(RuleBasedAIClient):
+    """Backward-compatible alias for tests and local development."""

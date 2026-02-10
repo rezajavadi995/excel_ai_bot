@@ -1,16 +1,14 @@
+from __future__ import annotations
+
 import json
+import re
+
 
 class IntentParser:
     def __init__(self, ai_client):
         self.ai = ai_client
 
     def build_prompt(self, user_text, excel_context):
-        """
-        excel_context شامل:
-        - sheet names
-        - columns
-        - column types
-        """
         return f"""
 تو یک مترجم حرفه‌ای دستور اکسل هستی.
 وظیفه تو فقط تبدیل دستور کاربر به JSON است.
@@ -39,12 +37,14 @@ class IntentParser:
 """
 
     def parse(self, user_text, excel_context):
-        prompt = self.build_prompt(user_text, excel_context)
+        response = self.ai.complete(self.build_prompt(user_text, excel_context)).strip()
 
-        response = self.ai.complete(prompt)
+        # بعضی مدل‌ها JSON را داخل ```json``` برمی‌گردانند
+        fenced = re.search(r"```(?:json)?\s*(\{.*\})\s*```", response, re.DOTALL)
+        if fenced:
+            response = fenced.group(1)
 
-        try:
-            blueprint = json.loads(response)
-            return blueprint
-        except json.JSONDecodeError:
-            raise ValueError("AI output is not valid JSON")
+        blueprint = json.loads(response)
+        if "error" in blueprint:
+            raise ValueError(f"AI error: {blueprint['error']}")
+        return blueprint
