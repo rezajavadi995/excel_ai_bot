@@ -1,0 +1,16 @@
+# virtualenv
+venv/
+
+# cache
+__pycache__/
+*.pyc
+
+# excel files
+*.xlsx
+
+# runtime storage
+storage/uploads/*
+storage/versions/*
+
+# system
+.DS_Store
