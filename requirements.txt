@@ -4,5 +4,8 @@ python-telegram-bot>=20.7
 rich>=13.6.0
 requests>=2.31.0
 PySocks
-httpx[socks]
 pytest>=8.0.0
+regex>=2024.5.15
+spacy>=3.7.0
+httpx[socks]
+

@@ -57,3 +57,16 @@ curl -fsSL https://raw.githubusercontent.com/rezajavadi995/excel_ai_bot/main/ins
 - عملیات‌ها به‌صورت state-machine مدیریت می‌شوند و تا قبل از `ذخیره نهایی` هیچ فایل نهایی تولید نمی‌شود.
 - عملیات‌ها در `operation stack` ثبت می‌شوند و امکان `Undo` تا قبل از ذخیره نهایی فعال است.
 - در ذخیره نهایی، خروجی با همان نام فایل اولیه برای کاربر ارسال می‌شود.
+
+
+## معماری تولیدی (Offline)
+
+ماژول‌ها:
+- `bot/intent_detection.py`: تشخیص intent با regex + spaCy (کاملاً آفلاین، بدون API خارجی)
+- `bot/context_manager.py`: FSM + حافظه پایدار کاربر با SQLite و Counter
+- `bot/decision_engine.py`: مسیریابی قطعی بین Excel/Help/Fallback
+- `bot/ui_renderer.py`: تولید هوشمند دکمه‌های inline/reply بر اساس FSM
+- `bot/excel_engine.py`: تحلیل/فیلتر/خروجی اکسل و reuse تحلیل قبلی
+
+الگوی اجرا:
+User → intent_detection → decision_engine ↔ context_manager → excel_engine → ui_renderer
