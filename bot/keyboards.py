@@ -7,7 +7,7 @@ def reply_home_menu(is_admin: bool = False) -> ReplyKeyboardMarkup:
     rows = [
         [KeyboardButton("🏠 منوی اصلی"), KeyboardButton("📊 آنالیز اکسل")],
         [KeyboardButton("🧭 حالت شناور"), KeyboardButton("⌨️ حالت فیزیکی")],
-        [KeyboardButton("📚 راهنما")],
+        [KeyboardButton("🤖 دستور هوشمند"), KeyboardButton("📚 راهنما")],
         [KeyboardButton("💾 ذخیره نهایی و دریافت فایل"), KeyboardButton("↩️ Undo")],
     ]
     if is_admin:
@@ -20,6 +20,7 @@ def inline_home_menu(is_admin: bool = False) -> InlineKeyboardMarkup:
         [InlineKeyboardButton("📤 ارسال فایل اکسل", callback_data="file:request")],
         [InlineKeyboardButton("📊 آنالیز اکسل", callback_data="excel:analyze")],
         [InlineKeyboardButton("🧩 عملیات روی فایل", callback_data="op:menu")],
+        [InlineKeyboardButton("🤖 دستور هوشمند", callback_data="ai:menu")],
         [InlineKeyboardButton("💾 ذخیره نهایی و دریافت فایل", callback_data="save:final")],
         [InlineKeyboardButton("↩️ Undo", callback_data="undo:last")],
         [InlineKeyboardButton("📚 راهنما", callback_data="nav:help")],
@@ -53,24 +54,24 @@ def operations_menu() -> InlineKeyboardMarkup:
     )
 
 
-def selectable_buttons(prefix: str, items: list[str], selected: set[int], title_prefix: str) -> InlineKeyboardMarkup:
+def selectable_buttons(prefix: str, items: list[str], selected: set[int], title_prefix: str, allow_confirm: bool = True) -> InlineKeyboardMarkup:
     rows = []
     for idx, label in enumerate(items, start=1):
         marker = "✅" if idx in selected else "🔘"
         rows.append([InlineKeyboardButton(f"{marker} {title_prefix} {idx}: {label}", callback_data=f"toggle:{prefix}:{idx}")])
 
-    rows.extend(
-        [
-            [InlineKeyboardButton("✔️ تایید", callback_data=f"confirm:{prefix}"), InlineKeyboardButton("✖️ لغو", callback_data="cancel:op")],
-            [InlineKeyboardButton("⬅️ بازگشت", callback_data="op:menu")],
-        ]
-    )
+    controls = []
+    if allow_confirm:
+        controls.append([InlineKeyboardButton("✔️ تایید انتخاب", callback_data=f"confirm:{prefix}")])
+    controls.append([InlineKeyboardButton("✖️ لغو", callback_data="cancel:op")])
+    controls.append([InlineKeyboardButton("⬅️ بازگشت", callback_data="op:menu")])
+    rows.extend(controls)
     return InlineKeyboardMarkup(rows)
 
 
-def selectable_rows(prefix: str, rows_idx: list[int], selected: set[int]) -> InlineKeyboardMarkup:
+def selectable_rows(prefix: str, rows_idx: list[int], selected: set[int], allow_confirm: bool = True) -> InlineKeyboardMarkup:
     labels = [f"Row {i}" for i in rows_idx]
-    return selectable_buttons(prefix, labels, selected, "سطر")
+    return selectable_buttons(prefix, labels, selected, "سطر", allow_confirm=allow_confirm)
 
 
 def finalize_inline() -> InlineKeyboardMarkup:
@@ -78,6 +79,7 @@ def finalize_inline() -> InlineKeyboardMarkup:
         [
             [InlineKeyboardButton("💾 ذخیره نهایی و دریافت فایل", callback_data="save:final")],
             [InlineKeyboardButton("↩️ Undo", callback_data="undo:last")],
+            [InlineKeyboardButton("🧩 ادامه عملیات", callback_data="op:menu")],
             [InlineKeyboardButton("⬅️ خانه", callback_data="nav:home")],
         ]
     )

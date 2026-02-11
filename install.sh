@@ -25,8 +25,6 @@ prompt_input() {
   local var_name="$1"
   local label="$2"
 
-  # when installer is executed by curl|bash, stdin is a pipe.
-  # read from /dev/tty to always get real user input.
   if [ -r /dev/tty ]; then
     read -r -p "$label" "$var_name" < /dev/tty
   else
@@ -46,6 +44,7 @@ install_deps() {
 ensure_repo() {
   if [ -d "$PROJECT_DIR/.git" ]; then
     cd "$PROJECT_DIR"
+    git reset --hard HEAD
     git pull || true
   else
     git clone "$REPO_URL" "$PROJECT_DIR"
@@ -144,12 +143,20 @@ export PYTHONPATH="$(pwd):$PYTHONPATH"
 while true; do
   echo "1) اجرای ربات"
   echo "2) اجرای تست‌ها"
-  echo "3) خروج"
+  echo "3) ریستارت سرویس"
+  echo "4) خروج"
   read -r -p "انتخاب: " choice
   case "$choice" in
     1) python -m bot.main_bot ;;
     2) pytest -q ;;
-    3) exit 0 ;;
+    3)
+      if command -v systemctl >/dev/null 2>&1; then
+        sudo systemctl restart excel-ai-bot || true
+        echo "سرویس ریستارت شد"
+      else
+        echo "systemctl در دسترس نیست"
+      fi ;;
+    4) exit 0 ;;
     *) echo "گزینه نامعتبر" ;;
   esac
 done'
@@ -163,11 +170,50 @@ done'
   fi
 }
 
+setup_service() {
+  if [ "$ENV_TYPE" = "linux" ] && command -v systemctl >/dev/null 2>&1; then
+    cat <<EOF | sudo tee /etc/systemd/system/excel-ai-bot.service >/dev/null
+[Unit]
+Description=Excel AI Bot Telegram Service
+After=network.target
+
+[Service]
+Type=simple
+User=$USER
+WorkingDirectory=$PROJECT_DIR
+Environment=PYTHONPATH=$PROJECT_DIR
+ExecStart=$PROJECT_DIR/venv/bin/python -m bot.main_bot
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    sudo systemctl daemon-reload
+    sudo systemctl enable excel-ai-bot >/dev/null 2>&1 || true
+    sudo systemctl restart excel-ai-bot || true
+    echo "✅ systemd service configured: excel-ai-bot"
+  elif [ "$ENV_TYPE" = "termux" ]; then
+    mkdir -p "$HOME/.termux/boot"
+    cat > "$HOME/.termux/boot/start_excel_ai_bot.sh" <<EOF
+#!/data/data/com.termux/files/usr/bin/bash
+cd "$PROJECT_DIR"
+source venv/bin/activate
+export PYTHONPATH="$PROJECT_DIR:\$PYTHONPATH"
+nohup python -m bot.main_bot > "$HOME/.excel_ai_bot.log" 2>&1 &
+EOF
+    chmod +x "$HOME/.termux/boot/start_excel_ai_bot.sh"
+    echo "✅ Termux boot script created at ~/.termux/boot/start_excel_ai_bot.sh"
+    echo "برای اجرای خودکار بعد از بوت، اپ Termux:Boot را نصب کن."
+  fi
+}
+
 install_deps
 ensure_repo
 ensure_venv
 setup_secrets
 create_launcher
+setup_service
 
 cd "$PROJECT_DIR"
 pytest -q || true
