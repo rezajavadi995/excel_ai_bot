@@ -16,11 +16,12 @@ def main():
             "پکیج python-telegram-bot نصب نیست. ابتدا نصب‌کننده را اجرا کنید یا در venv دستور `pip install -r requirements.txt` بزنید."
         ) from exc
 
-    from bot.handlers import handle_callback, handle_message, start
+    from bot.handlers import handle_callback, handle_document, handle_message, start
     from config import BOT_TOKEN
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
     app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 

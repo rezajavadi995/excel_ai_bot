@@ -9,7 +9,7 @@ if str(ROOT) not in sys.path:
 
 
 def main():
-    from bot.handlers import handle_callback, handle_message, start
+    from bot.handlers import handle_callback, handle_document, handle_message, start
     from config import BOT_TOKEN
 
     try:
@@ -21,6 +21,7 @@ def main():
 
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
     app.add_handler(CallbackQueryHandler(handle_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
